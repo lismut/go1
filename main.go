@@ -15,7 +15,7 @@ type eleminfo struct {
 	isFirst bool
 	isLast bool
 	level int
-	name string
+	fi os.FileInfo
 }
 
 type element struct {
@@ -49,24 +49,56 @@ func (stk *stack) Pop() (eleminfo, error) {
 	return r, nil
 }
 
+var closed [10]bool
+func dirTree(out *os.File, info eleminfo) {
+	for i := 0; i < info.level; i++ {
+		if closed[i] {
+			out.Write("\t")
+		} else {
+			out.Write("│\t")
+		}
+	}
+	if info.isLast {
+		out.Write("└───" + info.fi.Name() + "\n")
+		closed[info.level] = true
+	} else {
+		out.Write("├───" + info.fi.Name() + "\n")
+		closed[info.level] = false
+	}
+}
 
 func dirTree(out *os.File, path string, printFiles bool) error {
-	startList, err := ioutil.ReadDir(path)
+	current := path
 	stk := new(stack)
 	levelParent := 0
-	for all := 1; all > 0; all = stk.Size {
-		for i := len(startList); i > 0 ; i-- {
-			info := new(eleminfo)
-			info.isFirst = i == len(startList)
-			info.isLast = i == 1
-			info.name = startList[i-1].Name()
-			info.level = levelParent 
+	var startList []os.FileInfo 
+	for i := len(startList); i > 0 ; i-- {
+		infoN := new(eleminfo)
+		infoN.isFirst = i == len(startList)
+		infoN.isLast = i == 1
+		infoN.fi = startList[i-1]
+		infoN.level = info. 
+		if info.fi.IsDir || printFiles {
 			stk.Push(info)
 		}
+	}
+	for all := 1; all > 0; all = stk.Size {
+		
+		startList, err := ioutil.ReadDir(current)
+		
+		for i := len(startList); i > 0 ; i-- {
+			infoN := new(eleminfo)
+			infoN.isFirst = i == len(startList)
+			infoN.isLast = i == 1
+			infoN.fi = startList[i-1]
+			infoN.level = info. 
+			if info.fi.IsDir || printFiles {
+				stk.Push(info)
+			}
+		}
 		info := stk.Pop()
-		startList, err := ioutil.ReadDir(info.name)
-		levelParent = info.level
-
+		    
+		startList, err := ioutil.ReadDir(info.fi.
 	}
 
 }

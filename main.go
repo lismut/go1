@@ -61,10 +61,10 @@ func printTree(out *os.File, info eleminfo) {
 		}
 	}
 	if info.isLast {
-		out.WriteString("└───" + info.fi.Name() + "\n")
+		fmt.Fprintf(out, "└───" + info.fi.Name() + "\n")
 		closed[info.level] = true
 	} else {
-		out.WriteString("├───" + info.fi.Name() + "\n")
+		fmt.Fprintf(out, "├───" + info.fi.Name() + "\n")
 		closed[info.level] = false
 	}
 }
@@ -77,28 +77,32 @@ func dirTree(out *os.File, path string, printFiles bool) error {
 	info.path = path
 	isFirst := true
 	for all := 1; all > 0; all = stk.Size {
+		if stk.Size != 0 {
+			info, _ = stk.Pop()
+			if info.fi.IsDir() {
+				currPath = currPath + string(os.PathSeparator) + info.fi.Name()
+				//fmt.Println(currPath)
+				levelParent = info.level
+			}
+			printTree(out, info)
+		}
 		if isFirst || info.fi.IsDir() {
 			isFirst = false
 			startList, _ := ioutil.ReadDir(currPath)
-			fmt.Println(out, len(startList))
+			//fmt.Println(out, len(startList))
 			for i := len(startList); i > 0; i-- {
 				var infoN eleminfo
 				//infoN.isFirst = i == len(startList)
-				infoN.isLast = i == 1
+				infoN.isLast = i == len(startList)
 				infoN.fi = startList[i-1]
 				infoN.path = currPath
 				infoN.level = levelParent + 1
 				if printFiles || infoN.fi.IsDir() {
 					stk.Push(infoN)
 				}
+				//fmt.Println(infoN.fi.IsDir(), infoN.fi.Name())
 			}
 		}
-		info, _ := stk.Pop()
-		if info.fi.IsDir() {
-			currPath = currPath + info.fi.Name()
-			levelParent = info.level
-		}
-		printTree(out, info)
 	}
 	return nil
 }

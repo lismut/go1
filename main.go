@@ -1,22 +1,22 @@
 package main
 
 import (
-//	"fmt"
-//	"io"
+	//	"fmt"
+	//	"io"
+	"fmt"
 	"os"
-//	"path/filepath"
+	//	"path/filepath"
 	"io/ioutil"
-//	"strings"
+	//	"strings"
 	"errors"
 )
 
 type eleminfo struct {
-	data interface {}
-	isFirst bool
+	data   interface{}
 	isLast bool
-	level int
-	fi os.FileInfo
-	path string
+	level  int
+	fi     os.FileInfo
+	path   string
 }
 
 type element struct {
@@ -50,7 +50,8 @@ func (stk *stack) Pop() (eleminfo, error) {
 	return r, nil
 }
 
-var closed [10]bool
+var closed [100]bool
+
 func printTree(out *os.File, info eleminfo) {
 	for i := 0; i < info.level; i++ {
 		if closed[i] {
@@ -71,30 +72,35 @@ func printTree(out *os.File, info eleminfo) {
 func dirTree(out *os.File, path string, printFiles bool) error {
 	currPath := path
 	stk := new(stack)
-	levelParent := 0
+	levelParent := -1
 	var info eleminfo
-	for all := 1; all > 1; all = stk.Size {
-		if (info.fi.IsDir() || currPath == path) {
+	info.path = path
+	isFirst := true
+	for all := 1; all > 0; all = stk.Size {
+		if isFirst || info.fi.IsDir() {
+			isFirst = false
 			startList, _ := ioutil.ReadDir(currPath)
-			for i := len(startList); i > 0 ; i-- {
-				infoN := new(eleminfo)
-				infoN.isFirst = i == len(startList)
+			fmt.Println(out, len(startList))
+			for i := len(startList); i > 0; i-- {
+				var infoN eleminfo
+				//infoN.isFirst = i == len(startList)
 				infoN.isLast = i == 1
 				infoN.fi = startList[i-1]
 				infoN.path = currPath
-				infoN.level = levelParent + 1 
-				stk.Push(*infoN)
+				infoN.level = levelParent + 1
+				if printFiles || infoN.fi.IsDir() {
+					stk.Push(infoN)
+				}
 			}
 		}
-		info,_ := stk.Pop()
+		info, _ := stk.Pop()
 		if info.fi.IsDir() {
 			currPath = currPath + info.fi.Name()
+			levelParent = info.level
 		}
-		levelParent = info.level
 		printTree(out, info)
 	}
 	return nil
-
 }
 
 func main() {

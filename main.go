@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"io"
+//	"fmt"
+//	"io"
 	"os"
-	"path/filepath"
+//	"path/filepath"
 	"io/ioutil"
-	"strings"
+//	"strings"
 	"errors"
 )
 
@@ -16,6 +16,7 @@ type eleminfo struct {
 	isLast bool
 	level int
 	fi os.FileInfo
+	path string
 }
 
 type element struct {
@@ -50,56 +51,49 @@ func (stk *stack) Pop() (eleminfo, error) {
 }
 
 var closed [10]bool
-func dirTree(out *os.File, info eleminfo) {
+func printTree(out *os.File, info eleminfo) {
 	for i := 0; i < info.level; i++ {
 		if closed[i] {
-			out.Write("\t")
+			out.WriteString("\t")
 		} else {
-			out.Write("│\t")
+			out.WriteString("│\t")
 		}
 	}
 	if info.isLast {
-		out.Write("└───" + info.fi.Name() + "\n")
+		out.WriteString("└───" + info.fi.Name() + "\n")
 		closed[info.level] = true
 	} else {
-		out.Write("├───" + info.fi.Name() + "\n")
+		out.WriteString("├───" + info.fi.Name() + "\n")
 		closed[info.level] = false
 	}
 }
 
 func dirTree(out *os.File, path string, printFiles bool) error {
-	current := path
+	currPath := path
 	stk := new(stack)
 	levelParent := 0
-	var startList []os.FileInfo 
-	for i := len(startList); i > 0 ; i-- {
-		infoN := new(eleminfo)
-		infoN.isFirst = i == len(startList)
-		infoN.isLast = i == 1
-		infoN.fi = startList[i-1]
-		infoN.level = info. 
-		if info.fi.IsDir || printFiles {
-			stk.Push(info)
-		}
-	}
-	for all := 1; all > 0; all = stk.Size {
-		
-		startList, err := ioutil.ReadDir(current)
-		
-		for i := len(startList); i > 0 ; i-- {
-			infoN := new(eleminfo)
-			infoN.isFirst = i == len(startList)
-			infoN.isLast = i == 1
-			infoN.fi = startList[i-1]
-			infoN.level = info. 
-			if info.fi.IsDir || printFiles {
-				stk.Push(info)
+	var info eleminfo
+	for all := 1; all > 1; all = stk.Size {
+		if (info.fi.IsDir() || currPath == path) {
+			startList, _ := ioutil.ReadDir(currPath)
+			for i := len(startList); i > 0 ; i-- {
+				infoN := new(eleminfo)
+				infoN.isFirst = i == len(startList)
+				infoN.isLast = i == 1
+				infoN.fi = startList[i-1]
+				infoN.path = currPath
+				infoN.level = levelParent + 1 
+				stk.Push(*infoN)
 			}
 		}
-		info := stk.Pop()
-		    
-		startList, err := ioutil.ReadDir(info.fi.
+		info,_ := stk.Pop()
+		if info.fi.IsDir() {
+			currPath = currPath + info.fi.Name()
+		}
+		levelParent = info.level
+		printTree(out, info)
 	}
+	return nil
 
 }
 

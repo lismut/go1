@@ -80,7 +80,7 @@ func dirTree(out *os.File, path string, printFiles bool) error {
 		if stk.Size != 0 {
 			info, _ = stk.Pop()
 			if info.fi.IsDir() {
-				currPath = currPath + string(os.PathSeparator) + info.fi.Name()
+				currPath = info.path + string(os.PathSeparator) + info.fi.Name()
 				//fmt.Println(currPath)
 				levelParent = info.level
 			}

@@ -1,13 +1,12 @@
 package main
 
 import (
-	//	"fmt"
-	//	"io"
+	"io"
 	"fmt"
 	"os"
 	//	"path/filepath"
 	"io/ioutil"
-	//	"strings"
+	//"strings"
 	"errors"
 )
 
@@ -52,24 +51,34 @@ func (stk *stack) Pop() (eleminfo, error) {
 
 var closed [100]bool
 
-func printTree(out *os.File, info eleminfo) {
+func printTree(out io.Writer, info eleminfo) {
 	for i := 0; i < info.level; i++ {
 		if closed[i] {
-			out.WriteString("\t")
+			fmt.Fprintf(out, "\t")
 		} else {
-			out.WriteString("│\t")
+			fmt.Fprintf(out, "│\t")
 		}
 	}
+	var s string
 	if info.isLast {
-		fmt.Fprintf(out, "└───" + info.fi.Name() + "\n")
+		s = "└"
 		closed[info.level] = true
 	} else {
-		fmt.Fprintf(out, "├───" + info.fi.Name() + "\n")
+		s = "├"
 		closed[info.level] = false
 	}
+	s = s + "───" + info.fi.Name()
+	if !info.fi.IsDir() {
+		size := " (empty)"
+		if info.fi.Size() != 0 {
+			size = " (" + fmt.Sprint(info.fi.Size()) + "b)"
+		}
+		s = s + size
+	}
+	fmt.Fprintf(out, s + "\n")
 }
 
-func dirTree(out *os.File, path string, printFiles bool) error {
+func dirTree(out io.Writer, path string, printFiles bool) error {
 	currPath := path
 	stk := new(stack)
 	levelParent := -1
@@ -90,15 +99,18 @@ func dirTree(out *os.File, path string, printFiles bool) error {
 			isFirst = false
 			startList, _ := ioutil.ReadDir(currPath)
 			//fmt.Println(out, len(startList))
+			isLast := true
 			for i := len(startList); i > 0; i-- {
 				var infoN eleminfo
 				//infoN.isFirst = i == len(startList)
-				infoN.isLast = i == len(startList)
+				infoN.isLast = isLast
+
 				infoN.fi = startList[i-1]
 				infoN.path = currPath
 				infoN.level = levelParent + 1
 				if printFiles || infoN.fi.IsDir() {
 					stk.Push(infoN)
+					isLast = false
 				}
 				//fmt.Println(infoN.fi.IsDir(), infoN.fi.Name())
 			}
